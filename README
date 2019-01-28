@@ -84,10 +84,12 @@ loop integrals. Otherwise, results of tests against high-fidelity HOD simulation
 arXiv:1902.XXXXX.
 
 Efficiency:
-earlyCBiRd is not so fast because of computation of long-wavelength modulation matrices for the 
+earlyCBiRd is not so fast because of computation of long-wavelength modulation matrices for 
 IR-resummation. In comparison evaluation of the loop integrals is pretty rapid. 
 In current version the analytic results of the loop integrals are not stored. 
 A shot noise subtraction tends to slow down significantly the evaluation.
+Straightforward improvements can be implemented as soon as a fast IR-resummation scheme becomes
+available.
 
 
 References
