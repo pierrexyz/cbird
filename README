@@ -36,8 +36,8 @@ Three libraries are required for compilation:
 - the FFTW library <http://www.fftw.org/>
 - the CUBA library (version 4.2) <http://www.feynarts.de/cuba/> 
 - the Eigen library <http://eigen.tuxfamily.org/> 
-The code should be provided with the Eigen headers in the source: no installation should be 
-required for the Eigen library.
+The code is provided with the Eigen headers in the source: no installation should be required 
+for the Eigen library.
 
 The loop calculation involves a discrete Fourier transformation routine from the FFTW library
 and the use of the Eigen library for efficient matrix multiplication.
@@ -66,7 +66,7 @@ Decent numerical precision on the linear power spectrum in input is highly recom
 
 Output
 ------
-CBiRd generates six files :
+CBiRd generates six files for the power spectrum:
 'PowerSpectraLinear_lX.dat' and 'PowerSpectra1loop_lX.dat' with X = 0,2,4 being the multipoles.
 
 First line in the output files (with an '#' at the beginning) is the legend for the columns:
@@ -74,6 +74,8 @@ First line in the output files (with an '#' at the beginning) is the legend for 
 It means that the first column is the k's for which the power spectra in the other column are 
 evaluated and 'bi' is the EFT coefficients multiplying the power spectra in the corresponding
 column.
+
+CBiRd generates one file for the bispectrum: 'BispectrumTreeMonopole.dat'.
 
 
 Performances
