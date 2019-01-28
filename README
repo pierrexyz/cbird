@@ -58,14 +58,14 @@ Adjust or include paths to the GSL, FFTW and CUBA libraries in Makefile, and run
 To run CBiRd type:
 ./cbird path/to/inifile
 
-An explanatory inifile can be found in ./input/CBiRd.ini .
+An example inifile can be found in ./input/CBiRd.ini .
 
 Decent numerical precision on the linear power spectrum in input is highly recommended.
 (default CAMB of CLASS numerical precision is somewhat loose for evaluation of the loop integrals.)
 
 
-Outputs
--------
+Output
+------
 CBiRd generates six files :
 'PowerSpectraLinear_lX.dat' and 'PowerSpectra1loop_lX.dat' with X = 0,2,4 being the multipoles.
 
@@ -97,6 +97,4 @@ If using CBiRd in a publication, I would be very grateful if the following paper
 J. Gleyzes, N. Kokron, D. Markovic, L. Senatore, M. Zaldarriaga, P. Zhang, F. Beutler, H. Gil-Marin,
 arXiv:1902.XXXXX
 
-... and welcome to cite any other paper referenced in this README!# cbird
-# cbird
-# cbird
+... and welcome to cite any other paper referenced in this README!

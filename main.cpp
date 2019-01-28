@@ -10,7 +10,7 @@ int main(int argc, char *argv[]) {
 	
 	else {
 		// Default values
-		double nbar = 1./105. , km = 1. , knl = 1. ;
+		double nbar = 1./105. , knl = 1., km = 1. ;
 		redshift z0 = 0.61 ;
 		ParametersCosmology cosmo ; for (unsigned int i = 0 ; i < Nc ; i++) cosmo[i] = Reference[i] ;
 		YesNo ComputePowerSpectrum = 1, ResumPowerSpectrum = 1, ComputeBispectrum = 1 ;
@@ -23,6 +23,7 @@ int main(int argc, char *argv[]) {
 			ComputePowerSpectrum, ResumPowerSpectrum, ComputeBispectrum,
 			PathToTriangles, aperp, apar) ;
 
+		knl = km ;
 		///////////////////////////
 		//
 		///////////////////////////
