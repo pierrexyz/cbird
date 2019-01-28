@@ -1,0 +1,102 @@
+--- CBiRd ---
+Code for Bias tracers in Redshift space
+version 0.3 (earlyCBiRd - 28/01/2019)
+
+by: Pierre Zhang
+
+
+Introduction
+------------
+CBiRd provides correlators of bias tracers in redshift space (in the EFTofLSS):
+
+1. CBiRd computes the multipoles l = 0, 2, 4, of the one-loop power spectrum described in
+arXiv:1610.09321 using an FFTLog decomposition of the linear power spectrum and analytic 
+evaluation of the loop integrals following arXiv:1708.08130. The multipoles are IR-resummed 
+using controlled approximations identified in arXiv:1512.06831.
+
+2. CBiRd computes the monopole of the tree-level bispectrum for arbitrary Alcock-Paczynski 
+parameters.
+
+More details on the implementation can be found in arXiv:1902.XXXXX.
+
+
+Why earlyCBiRd?
+---------------
+Because CBiRd is not so fast (not fast enough for direct use in MCMC unlike e.g. CMBfast).
+CBiRd is just a pilot attempt for efficient computation of EFTofLSS correlators.
+Incidentally, CBiRd can provide an 'earlybird' pass to explore the cosmos with LSS surveys.
+
+
+Requirements
+------------
+CBiRd is written in C++ with standard ISO C++11. 
+
+Three libraries are required for compilation:
+- the GSL library <https://www.gnu.org/software/gsl/>
+- the FFTW library <http://www.fftw.org/>
+- the CUBA library (version 4.2) <http://www.feynarts.de/cuba/> 
+- the Eigen library <http://eigen.tuxfamily.org/> 
+The code should be provided with the Eigen headers in the source: no installation should be 
+required for the Eigen library.
+
+The loop calculation involves a discrete Fourier transformation routine from the FFTW library
+and the use of the Eigen library for efficient matrix multiplication.
+
+The IR-resummation makes use of the FFTLog algorithm first written in Fortran by A. Hamilton: 
+<http://casa.colorado.edu/~ajsh/FFTLog/>, then translated in C by J. Carlson within the
+Copter library: <http://mwhite.berkeley.edu/Copter/>, which is released under the GNU General 
+Public License, see <https://www.gnu.org/licenses/gpl-3.0.en.html>. 
+The files 'fftlog.h' and 'fftlog.cpp' are from the Copter library. 
+
+The bispectrum monopole projection is performed with the Cuhre routine of the CUBA library.
+
+
+Compiling and running
+---------------------
+Adjust or include paths to the GSL, FFTW and CUBA libraries in Makefile, and run 'make'.
+
+To run CBiRd type:
+./cbird path/to/inifile
+
+An explanatory inifile can be found in ./input/CBiRd.ini .
+
+Decent numerical precision on the linear power spectrum in input is highly recommended.
+(default CAMB of CLASS numerical precision is somewhat loose for evaluation of the loop integrals.)
+
+
+Outputs
+-------
+CBiRd generates six files :
+'PowerSpectraLinear_lX.dat' and 'PowerSpectra1loop_lX.dat' with X = 0,2,4 being the multipoles.
+
+First line in the output files (with an '#' at the beginning) is the legend for the columns:
+# k[h/Mpc]    bi    ... 
+It means that the first column is the k's for which the power spectra in the other column are 
+evaluated and 'bi' is the EFT coefficients multiplying the power spectra in the corresponding
+column.
+
+
+Performances
+------------
+Convergence:
+earlyCBiRd has been tested against an even earlier version involving numerical evaluation of the
+loop integrals. Otherwise, results of tests against high-fidelity HOD simulations can be found in
+arXiv:1902.XXXXX.
+
+Efficiency:
+earlyCBiRd is not so fast because of computation of long-wavelength modulation matrices for the 
+IR-resummation. In comparison evaluation of the loop integrals is pretty rapid. 
+In current version the analytic results of the loop integrals are not stored. 
+A shot noise subtraction tends to slow down significantly the evaluation.
+
+
+References
+-----------
+If using CBiRd in a publication, I would be very grateful if the following paper were to be cited:
+'The Effective Field Theory of Large-Scale Structure applied to SDSS/BOSS data',
+J. Gleyzes, N. Kokron, D. Markovic, L. Senatore, M. Zaldarriaga, P. Zhang, F. Beutler, H. Gil-Marin,
+arXiv:1902.XXXXX
+
+... and welcome to cite any other paper referenced in this README!# cbird
+# cbird
+# cbird
