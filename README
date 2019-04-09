@@ -1,6 +1,6 @@
 --- CBiRd ---
 Code for Bias tracers in Redshift space
-version 0.3 (earlyCBiRd - 28/01/2019)
+version 0.3.3 (earlyCBiRd - 21/03/2019)
 
 by: Pierre Zhang
 
@@ -66,8 +66,8 @@ Decent numerical precision on the linear power spectrum in input is highly recom
 
 Output
 ------
-CBiRd generates six files for the power spectrum:
-'PowerSpectraLinear_lX.dat' and 'PowerSpectra1loop_lX.dat' with X = 0,2,4 being the multipoles.
+CBiRd generates the power spectrum multipoles stacked horizontally in two files:
+'PowerSpectraLinear.dat' and 'PowerSpectra1loop.dat'.
 
 First line in the output files (with an '#' at the beginning) is the legend for the columns:
 # k[h/Mpc]    bi    ... 
@@ -75,18 +75,19 @@ It means that the first column is the k's for which the power spectra in the oth
 evaluated and 'bi' is the EFT coefficients multiplying the power spectra in the corresponding
 column.
 
-CBiRd generates one file for the bispectrum: 'BispectrumTreeMonopole.dat'.
+CBiRd generates the bispectrum in one file: 'BispectrumTreeMonopole.dat'.
 
 
 Performances
 ------------
 Convergence:
-earlyCBiRd has been tested against an even earlier version involving numerical evaluation of the
-loop integrals. Otherwise, results of tests against high-fidelity HOD simulations can be found in
-arXiv:1902.XXXXX.
+earlyCBiRd has been tested against Mathematica codes (some can be found in the EFTofLSS repositery)
+and against an even earlier version involving numerical evaluation of theloop integrals. 
+The spectra are computed up to sub-percent precision.
+Results of tests against high-fidelity HOD simulations can be found in arXiv:1902.XXXXX.
 
 Efficiency:
-earlyCBiRd is not so fast because of computation of long-wavelength modulation matrices for 
+earlyCBiRd is not so fast because of the computation of long-wavelength modulation matrices for 
 IR-resummation. In comparison evaluation of the loop integrals is pretty rapid. 
 In current version the analytic results of the loop integrals are not stored. 
 A shot noise subtraction tends to slow down significantly the evaluation.
@@ -98,7 +99,7 @@ References
 -----------
 If using CBiRd in a publication, I would be very grateful if the following paper were to be cited:
 'The Effective Field Theory of Large-Scale Structure applied to SDSS/BOSS data',
-J. Gleyzes, N. Kokron, D. Markovic, L. Senatore, M. Zaldarriaga, P. Zhang, F. Beutler, H. Gil-Marin,
-arXiv:1902.XXXXX
+G. d'Amico, J. Gleyzes, N. Kokron, D. Markovic, L. Senatore, M. Zaldarriaga, P. Zhang, 
+F. Beutler, H. Gil-Marin, arXiv:1902.XXXXX
 
 ... and welcome to cite any other paper referenced in this README!
