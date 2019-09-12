@@ -1,0 +1,151 @@
+--- CBiRd ---
+Code for Bias tracers in Redshift space
+version 0.5 (earlyCBiRd - 12/09/2019)
+
+by: Guido D'Amico, Leonardo Senatore, Pierre Zhang
+
+
+Introduction
+------------
+CBiRd provides correlators of bias tracers in redshift space in 
+the Effective Field Theory of Large-Scale Structure (EFTofLSS).
+Incidentally, CBiRd can provide an 'earlybird' pass to explore the 
+cosmos with LSS surveys.
+
+CBiRd computes the following correlators of bias tracers in redshift
+space:
+- the multipoles l = 0, 2, 4 of the one-loop power 
+spectrum described in arXiv:1610.09321 using an FFTLog decomposition of 
+the linear power spectrum and analytic evaluation of the loop 
+integrals, following arXiv:1708.08130. The multipoles are IR-resummed 
+using controlled approximations identified in arXiv:1512.06831.
+- the monopole of the tree-level bispectrum for 
+arbitrary Alcock-Paczynski parameters.
+
+CBiRd consists in:
+- C++BiRd: a C++ code for core calculation (C++BiRd)
+- TBiRd: a Python implementation of a Taylor expansion of the power 
+spectrum around a reference cosmology for efficient evaluation, 
+following arXiv:1606.03633
+- Python libraries to correct for observational systematics: 
+Alcock-Paczynski effect, window functions and fiber-collision 
+corrections following arXiv:1609.01714.
+- MCMC samplers
+
+More details can be found in arXiv:1909.XXXXX and arXiv:1909.XXXXX
+
+
+C++ Requirements
+----------------
+CBiRd is written in C++ with standard ISO C++11. 
+
+Three libraries are required for compilation:
+- the GSL library <https://www.gnu.org/software/gsl/>
+- the FFTW library <http://www.fftw.org/>
+- the CUBA library (version 4.2) <http://www.feynarts.de/cuba/> 
+- the Eigen library <http://eigen.tuxfamily.org/> 
+The code is provided with the Eigen headers in the source: no 
+installation should be required for the Eigen library.
+
+The loop calculation involves a discrete Fourier transformation routine 
+from the FFTW library and the use of the Eigen library for efficient 
+matrix multiplication.
+
+The IR-resummation makes use of the FFTLog algorithm first written in 
+Fortran by A. Hamilton: <http://casa.colorado.edu/~ajsh/FFTLog/>, then 
+translated in C by J. Carlson within the Copter library: 
+<http://mwhite.berkeley.edu/Copter/>, which is released under the GNU 
+General Public License, see 
+<https://www.gnu.org/licenses/gpl-3.0.en.html>. 
+The files 'fftlog.h' and 'fftlog.cpp' are from the Copter library. 
+
+The bispectrum monopole projection is performed with the Cuhre routine 
+of the CUBA library.
+
+
+Compiling and running C++BiRd
+-----------------------------
+Adjust or include paths to the GSL, FFTW and CUBA libraries in 
+Makefile, and run 'make'.
+
+To run CBiRd type:
+./cbird path/to/inifile
+
+An example inifile can be found in ./input/CBiRd.ini
+
+
+C++BiRd Output
+--------------
+CBiRd generates the power spectrum multipoles stacked horizontally in 
+two files:
+'PowerSpectraLinear.dat' and 'PowerSpectra1loop.dat'
+
+First line in the output files (with an '#' at the beginning) is the 
+legend for the columns:
+# k[h/Mpc]    bi    ... 
+It means that the first column is the k's for which the power spectra 
+in the other column are evaluated and 'bi' is the EFT coefficients 
+multiplying the power spectra in the corresponding column.
+
+CBiRd generates the bispectrum in one file: 'BispectrumTreeMonopole.dat'
+
+
+C++BiRd Performances
+--------------------
+Convergence:
+C++BiRd has been tested against Mathematica codes (some can be found in 
+the EFTofLSS repositery) and against an even earlier version involving 
+numerical evaluation of the loop integrals. 
+The spectra are computed up to sub-percent precision.
+Results of tests against high-fidelity HOD simulations can be found in 
+arXiv:1902.XXXXX.
+
+Efficiency:
+C++BiRd is not so fast because of the computation of long-wavelength 
+modulation matrices for IR-resummation. In comparison evaluation of the 
+loop integrals is pretty rapid. 
+
+Possible improvements:
+In current version the analytic results of the loop integrals are not 
+stored. 
+Shot noise subtraction produces a factor 2 on the evaluation of the 
+loop integrals.
+
+
+Python dependencies
+-------------------
+CBiRd is written in standard Python 2.7.X
+
+The following libraries are used: numpy, scipy
+The Taylor expansion uses findiff: <https://github.com/maroba/findiff>
+The MCMC sampler is based on emcee: arXiv:1202.3665
+
+
+Running TBiRd
+-------------
+Documentation under construction.
+
+
+References
+-----------
+If using CBiRd in a publication, we would be very grateful if the 
+following papers were to be cited:
+
+'The Cosmological Analysis of the SDSS/BOSS data from the Effective 
+Field Theory of Large-Scale Structure',
+G. d'Amico, J. Gleyzes, N. Kokron, D. Markovic, L. Senatore, P. Zhang, 
+F. Beutler, H. Gil-Marin, arXiv:1909.XXXXX
+
+'Efficient Cosmological Analysis of the SDSS/BOSS data from the 
+Effective Field Theory of Large-Scale Structure',
+T. Colas, G. d'Amico, L. Senatore, P. Zhang, F. Beutler, 
+arXiv:1909.XXXXX
+
+
+Contributions
+-------------
+Parts of the code has been written with the help of:
+F. Beutler, T. Colas, H. Gil-Marin, J. Gleyzes, N. Kokron, 
+M. Lewandowski, D. Markovic and A. Perko.
+
+Special mention to J. Gleyzes for early contributions on the pipeline.
