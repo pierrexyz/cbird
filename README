@@ -7,30 +7,32 @@ by: Guido D'Amico, Leonardo Senatore, Pierre Zhang
 
 Introduction
 ------------
-CBiRd provides correlators of bias tracers in redshift space in 
-the Effective Field Theory of Large-Scale Structure (EFTofLSS).
+CBiRd provides correlators in the Effective Field Theory of Large-Scale 
+Structure (EFTofLSS)in a pipeline `ready-to-use' to perform cosmological 
+analysis of galaxy-redshift surveys data.
 Incidentally, CBiRd can provide an 'earlybird' pass to explore the 
 cosmos with LSS surveys.
 
-CBiRd computes the following correlators of bias tracers in redshift
+CBiRd computes the following correlators of biased tracers in redshift
 space:
 - the multipoles l = 0, 2, 4 of the one-loop power 
 spectrum described in arXiv:1610.09321 using an FFTLog decomposition of 
 the linear power spectrum and analytic evaluation of the loop 
-integrals, following arXiv:1708.08130. The multipoles are IR-resummed 
+integrals following arXiv:1708.08130. The multipoles are IR-resummed 
 using controlled approximations identified in arXiv:1512.06831.
 - the monopole of the tree-level bispectrum for 
 arbitrary Alcock-Paczynski parameters.
 
 CBiRd consists in:
-- C++BiRd: a C++ code for core calculation (C++BiRd)
+- C++BiRd: a C++ code for core calculation
 - TBiRd: a Python implementation of a Taylor expansion of the power 
 spectrum around a reference cosmology for efficient evaluation, 
 following arXiv:1606.03633
 - Python libraries to correct for observational systematics: 
-Alcock-Paczynski effect, window functions and fiber-collision 
-corrections following arXiv:1609.01714.
-- MCMC samplers
+Alcock-Paczynski effect; window functions; fiber-collision 
+corrections described in arXiv:1609.01714.
+- MCBiRd: MCMC samplers for a power spectrum and bispectrum analysis of 
+galaxy-redshift surveys data based on emcee: arXiv:1202.3665
 
 More details can be found in arXiv:1909.XXXXX and arXiv:1909.XXXXX
 
@@ -63,7 +65,7 @@ The bispectrum monopole projection is performed with the Cuhre routine
 of the CUBA library.
 
 
-Compiling and running C++BiRd
+C++BiRd compiling and running
 -----------------------------
 Adjust or include paths to the GSL, FFTW and CUBA libraries in 
 Makefile, and run 'make'.
@@ -71,7 +73,7 @@ Makefile, and run 'make'.
 To run CBiRd type:
 ./cbird path/to/inifile
 
-An example inifile can be found in ./input/CBiRd.ini
+An example inifile can be found in c++bird.ini
 
 
 C++BiRd Output
@@ -84,8 +86,10 @@ First line in the output files (with an '#' at the beginning) is the
 legend for the columns:
 # k[h/Mpc]    bi    ... 
 It means that the first column is the k's for which the power spectra 
-in the other column are evaluated and 'bi' is the EFT coefficients 
-multiplying the power spectra in the corresponding column.
+in the other column are evaluated and 'bi' are the EFT coefficients 
+multiplying the power spectra Pi(k) in the corresponding column. 
+The total power spectrum is then given by:
+P(k, z) = bi * Pi(k, z) (sum over i) where z is the redshift.
 
 CBiRd generates the bispectrum in one file: 'BispectrumTreeMonopole.dat'
 
@@ -94,47 +98,104 @@ C++BiRd Performances
 --------------------
 Convergence:
 C++BiRd has been tested against Mathematica codes (some can be found in 
-the EFTofLSS repositery) and against an even earlier version involving 
-numerical evaluation of the loop integrals. 
-The spectra are computed up to sub-percent precision.
-Results of tests against high-fidelity HOD simulations can be found in 
-arXiv:1902.XXXXX.
+the EFTofLSS repository <http://web.stanford.edu/~senatore/>) and 
+against an earlier version involving numerical evaluation of the loop 
+integrals. The spectra are computed up to sub-percent numerical 
+precision. See cnest/TEST for results on numerical consistency and 
+stability tests.
 
 Efficiency:
 C++BiRd is not so fast because of the computation of long-wavelength 
 modulation matrices for IR-resummation. In comparison evaluation of the 
 loop integrals is pretty rapid. 
 
-Possible improvements:
-In current version the analytic results of the loop integrals are not 
+Possible (straightforward) improvements:
+- In current version the analytic results of the loop integrals are not 
 stored. 
-Shot noise subtraction produces a factor 2 on the evaluation of the 
+- Shot noise subtraction produces a factor 2 on the evaluation of the 
 loop integrals.
+- Stochastic terms and terms multiplied by b4 can be not necessarily 
+computed from C++BiRd, as the cosmological dependence of the first ones 
+are solely entering in their respective EFT coefficients, while for the 
+second one b2 and b4 are 99% correlated, see arXiv:1909.05271.
 
 
 Python dependencies
 -------------------
-CBiRd is written in standard Python 2.7.X
-
-The following libraries are used: numpy, scipy
-The Taylor expansion uses findiff: <https://github.com/maroba/findiff>
+The following libraries are used: numpy, scipy, emcee
+The Taylor expansion uses findiff: <https://github.com/maroba/findiff> 
+to compute derivatives by finite differences.
 The MCMC sampler is based on emcee: arXiv:1202.3665
 
 
-Running TBiRd
+TBiRd running
 -------------
-Documentation under construction.
+TBiRd calls CLASS to compute the linear power spectrum and C++BiRd to 
+compute the redshift space 1-loop power spectrum through the Python 
+wrappers plinear.py and pnonlinear.py. Needless to say, make sure that 
+CLASS and C++BiRd are compiled somewhere.
+
+The reference cosmology for the Taylor expansion as well as the paths 
+for CLASS and C++BiRd are specified in an inifile. An example can be 
+found in tbird.ini.
+
+In Grid.py, adjust the path to the inifile. One can also choose in 
+which parameters to expand, the order of the expansion as well as the 
+steps for the finite differences for the evaluation of the derivatives. 
+Default setting is the one used and described in arXiv:1909.XXXXX.
+
+To run TBiRd, first precompute the derivatives. Make a small grid with 
+make_taylorgrid.py that computes all relevant cosmologies around the 
+reference one for the finite differences. Some options for 
+parellisation are to choose at the top of the file. Then check and 
+glue the grid with checkglue_taylorgrid.py.
+
+To apply the Alcock-Paczynski effect, window functions and 
+fiber-collision corrections, apply modify_grid_fiberwindow.py to the 
+grid. Glue it with glue_taylorprocessgrid.py.
+
+After that, run computederivs.py to calculate the derivatives. 
+TBiRd is now ready to use.
+
+To evaluate the power spectrum with TBiRd, first import the library 
+Grid.py where the reference cosmology, cosmological parameters to vary, 
+etc. are specified. Then, import the library tbird.py, load the 
+precomputed derivatives with tbird.load_pder(derivs-filename), and call 
+tbird.get_PSTaylor(dtheta, derivatives) where dtheta is the difference 
+between the cosmology to evaluate to the reference one. Typically, one 
+needs two call twice those functions to load both linear and the 1-loop 
+power spectra. Give values for the EFT parameters and compute the total 
+power spectrum from TBiRd! (with e.g. get_PSbias(plin, ploop, dfit) in 
+tbird.py, providing a dictionary dfit for the EFT parameters. 
+Check an alternative implementation in the likelihood function 
+lnlike(...) calling computePS(...) in MCMC_taylor.py ) 
+
+TBiRd numerical convergence for a low-order Taylor expansion is 
+described in arXiv:1909.XXXXX.
+
+
+MCBiRd running
+--------------
+[Documentation under construction]
+
+MCBiRd consists in a bunch of MCMC sampler scripts. MCBiRd features 
+likelihoods for the CBiRd correlators. In particular, the 
+partially-marginalized likelihood described in arXiv:1909.05271 
+where the EFT parameters appearing only linearly in the correlators 
+are marginalized over at the level of the likelihood.
+
+MCBiRd is based on emcee: arXiv:1202.3665
 
 
 References
------------
+----------
 If using CBiRd in a publication, we would be very grateful if the 
 following papers were to be cited:
 
 'The Cosmological Analysis of the SDSS/BOSS data from the Effective 
 Field Theory of Large-Scale Structure',
 G. d'Amico, J. Gleyzes, N. Kokron, D. Markovic, L. Senatore, P. Zhang, 
-F. Beutler, H. Gil-Marin, arXiv:1909.XXXXX
+F. Beutler, H. Gil-Marin, arXiv:1909.05271
 
 'Efficient Cosmological Analysis of the SDSS/BOSS data from the 
 Effective Field Theory of Large-Scale Structure',
@@ -142,8 +203,8 @@ T. Colas, G. d'Amico, L. Senatore, P. Zhang, F. Beutler,
 arXiv:1909.XXXXX
 
 
-Contributions
--------------
+Contributors
+------------
 Parts of the code has been written with the help of:
 F. Beutler, T. Colas, H. Gil-Marin, J. Gleyzes, N. Kokron, 
 M. Lewandowski, D. Markovic and A. Perko.

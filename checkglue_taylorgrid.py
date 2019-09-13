@@ -3,9 +3,10 @@ import sys
 import numpy as np
 import Grid
 
-pathpk = os.path.join(os.environ["GROUP_HOME"], "Pk")
-pathgrid = os.path.join(os.environ["GROUP_HOME"], "GridsEFT")
-gridname = 'z0p32-' + ('-').join(Grid.freepar)
+basedir = './'
+pathpk = os.path.join(basedir, "Pk")
+pathgrid = os.path.join(basedir, "GridsEFT")
+gridname = 'taylorgrid-' + ('-').join(Grid.freepar)
 
 nruns = int(sys.argv[1])
 nranks = int(sys.argv[2])

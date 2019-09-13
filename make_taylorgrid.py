@@ -12,7 +12,7 @@ import time
 
 time.sleep(4)
 
-basedir = os.environ["GROUP_HOME"]
+basedir = './'
 OUTPATH = os.path.join(basedir, "output")
 outpk = os.path.join(basedir, "Pk")
 

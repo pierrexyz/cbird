@@ -1,3 +1,7 @@
+# MCMC sampler for arXiv:1909.05271
+# the EFT power spectrum and bispectrum need to be pre-evaluated on a grid
+# the grid is called by get_grid(...) and the EFT predictions are evaluated by linearly interpolating over the grid.
+
 import sys
 from scipy import stats
 import time

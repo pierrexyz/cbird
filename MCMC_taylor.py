@@ -1,3 +1,6 @@
+# MCMC sampler for arXiv:1909.XXXXX
+# the EFT power spectrum is evaluated with TBiRd.
+
 # import sys
 from scipy import stats, optimize, special
 import time
@@ -7,7 +10,7 @@ import pandas as pd
 import numpy as np
 import emcee
 import Grid
-import computederivs
+import tbird
 import os
 import sys
 ###########################################
@@ -18,8 +21,8 @@ THIS_PATH = os.path.dirname(__file__)
 # Data paths
 INPATH = os.path.abspath(os.path.join(THIS_PATH, 'input'))
 
-GRIDPATH = os.path.abspath(os.path.join(os.environ['GROUP_HOME'], 'GridsEFT'))
-OUTPATH = os.environ['GROUP_HOME']
+GRIDPATH = os.path.abspath(THIS_PATH, 'GridsEFT')
+OUTPATH = THIS_PATH
 
 CHAINPATH = os.path.abspath(os.path.join(OUTPATH, 'chains'))
 
@@ -32,32 +35,24 @@ if not os.path.isdir(OUTPATH):
 ###########################################
 
 # rescale number density
-nd = 4.5e-4 
+nd = 4.e-4 
 km = 0.7 
 knl = 0.7 
 k0p7 = 0.7
-shotnoiseprior = 100.  # 250.
+shotnoiseprior = 100. 
 k2prior = 2. / 4.
 
-# speed of light [km/s]
-C = 299792.458
-# omega_gamma = Omega_gamma h^2: normalized physical photon density today (T_cmb = 2.7255 (CLASS))
-OG = 2.47282e-5
-# Nur: Number of ultra-relativistic species (CLASS):
-NUR = 3.046
-# omega_radiation
-ORAD = (1. + NUR * 7. / 8. * (4. / 11.)**(4. / 3.)) * OG
-
-# Baryon-photon decoupling redshift (PLANCK 2015 TT,TE,EE+lowP+lensing (Table 4)):
-ZD = 1059.94
-# rd(zd+sigma)-dr(zd-sigma) < 0.2 sigma_rd: we take zd to be a delta function
-SIGMA_ZD = 0.30
-# Sound horizon at decoupling [Mpc] (PLANCK 2015 TT,TE,EE+lowP+lensing (Table 4)):
-RD = 147.09
+C = 299792.458 # speed of light [km/s]
+OG = 2.47282e-5 # omega_gamma = Omega_gamma h^2: normalized physical photon density today (T_cmb = 2.7255 (CLASS))
+NUR = 3.046 #Nur: Number of ultra-relativistic species (CLASS):
+ORAD = (1.+ NUR*7./8.*(4./11.)**(4./3.))*OG # omega_radiation
+ZD = 1059.94 # Baryon-photon decoupling redshift (PLANCK 2018 TT,TE,EE+lowP+lensing (Table 4))
+SIGMA_ZD = 0.30 # rd(zd+sigma)-dr(zd-sigma) < 0.2 sigma_rd: we take zd to be a delta function
+RD = 147.09 # Sound horizon at decoupling [Mpc] (PLANCK 2018 TT,TE,EE+lowP+lensing (Table 4)):
 SIGMA_RD = 0.26
 
 
-def dPuncorr(kout, fs=0.6, Dfc=0.43 / 0.6777):  # PZ: change kPS to kout
+def dPuncorr(kout, fs=0.6, Dfc=0.43 / 0.6777):
     """
     Compute the uncorrelated contribution of fiber collisions
     kPS : a cbird wavenumber output, typically a (39,) np array
@@ -68,7 +63,6 @@ def dPuncorr(kout, fs=0.6, Dfc=0.43 / 0.6777):  # PZ: change kPS to kout
     for l in [0, 2, 4]:
         dPunc[int(l / 2)] = (- fs * np.pi * Dfc**2. * (2. * np.pi / kout) * (2. * l + 1.) / 2. *
                              special.legendre(l)(0) * (1. - (kout * Dfc)**2 / 8.))
-    # PZ: Added next-to-leading term
     return dPunc
 
 
@@ -104,69 +98,52 @@ def gelman_rubin_convergence(withinchainvar, meanchain, n, Nchains, ndim):
     return scalereduction
 
 
-def embed_Pi(ploop, masktriangle):
-    # Embed the Pi into a bigger shape that has appropriate prepadding and postpadding
-    # so the bisp term can be easily added on
-    # Dimension of Pi is [nterms, 3, 100]
-    # return with dimension [nterms+1, 4, 100+nkbisp]
-    nkbisp = sum(masktriangle)
-    # nkp = ploop.shape[1]
-    # Cast into bigger array of dim p
-    big_array = np.zeros(shape=(ploop.shape[0] + 1, 100 + nkbisp))
-    return big_array
-
-
-def get_Pi_for_marg(Ploop, kfull, kmin, kmax, b1, model=1, withBisp=False):
+def get_Pi_for_marg(Ploop, kfull, kmin, kmax, b1, model = 1, bisp=None, masktriangle=None, withhex = True):
 
     nk = len(kfull)
-    Onel0 = np.array([np.ones(nk), np.zeros(nk)])
-    # kl0 = np.array([kfull,np.zeros(nk),np.zeros(nk)])
+    Pi = np.array([ 1.*(Ploop[:,16,:]+b1*Ploop[:,13,:]) / km**2 ])
 
-    #  k^2 quad
-    kl2 = np.array([np.zeros(nk), kfull])
+    #if withhex: 
+    Pi = np.concatenate(( Pi, np.array([ 1.*(Ploop[:,17,:]+b1*Ploop[:,14,:]) / km**2 ]) ))
 
-    # k^4 P11 quad
-    ploop0, ploop2 = Ploop[:, :18, :]
-    # ploop0e1b1, ploop2e1b1 = Ploop[:, 19, :]
-    # ploop0e1, ploop2e1 = Ploop[:, 22, :]
-    # k4P11 = np.array([np.zeros(nk), b1 * ploop2e1b1 + ploop2e1])
+    if model == 1: 
+        Onel0 = np.array([np.ones(nk),np.zeros(nk),np.zeros(nk)]) # shot-noise mono
+        kl2 = np.array([np.zeros(nk), kfull, np.zeros(nk)]) # k^2 quad
+        Pi = np.concatenate(( Pi, 
+            np.array([
+                0.5* (Ploop[:,3,:]+b1*Ploop[:,7,:]),
+                0.5* (Ploop[:,15,:]+b1*Ploop[:,12,:]) / knl**2,
+                Onel0 * shotnoiseprior,
+                0.25*kl2**2 / nd / km**2
+                    ]) ))
 
-    if model == 1:
-        Pi = np.array([Ploop[:, 3, :] + b1 * Ploop[:, 7, :],
-                       (Ploop[:, 15, :] + b1 * Ploop[:, 12, :]) / knl**2,
-                       (Ploop[:, 16, :] + b1 * Ploop[:, 13, :]) / km**2,
-                       # Onel0 / nd,
-                       # k4P11,             # this is k4P11 quad ### comment it out if you want
-                       # to change model to k2quad only
-                       kl2**2 / nd / km**2])  # this is k2 quad
-    elif model == 2:
-        Pi = np.array([0.5 * (Ploop[:, 3, :] + b1 * Ploop[:, 7, :]),  # rescale to have prior of 2
-                       0.5 * (Ploop[:, 15, :] + b1 * Ploop[:, 12, :]) / knl**2,  # rescale to have prior of 2
-                       (Ploop[:, 16, :] + b1 * Ploop[:, 13, :]) / km**2,  # b6
-                       (Ploop[:, 17, :] + b1 * Ploop[:, 14, :]) / km**2,  # b7
-                       Onel0 * shotnoiseprior,
-                       k2prior * kl2**2 / nd / k0p7**2])
-    elif model == 3:
-        Pi = np.array([Ploop[:, 3, :] + b1 * Ploop[:, 7, :],
-                       (Ploop[:, 15, :] + b1 * Ploop[:, 12, :]) / knl**2,
-                       (Ploop[:, 16, :] + b1 * Ploop[:, 13, :]) / km**2,
-                       Onel0 / nd,
-                       k4P11])
+    if model == 2:
+        kl2 = np.array([np.zeros(nk), kfull, np.zeros(nk)]) # k^2 quad
+        Pi = np.concatenate(( Pi, 
+            np.array([
+                0.5* (Ploop[:,3,:]+b1*Ploop[:,7,:]),
+                0.5* (Ploop[:,15,:]+b1*Ploop[:,12,:]) / knl**2,
+                0.25*kl2**2 / nd / km**2
+                    ]) ))
 
-    kmask = np.where((kfull >= kmin) & (kfull <= kmax))[0]
+    kmask = np.where((kfull > kmin) & (kfull < kmax+0.0001))[0]
 
-    if withBisp:
-        # b8 is not marginalized with bisp but b11 is.
-        # print(Ploop[:,3,:].shape, Ploop[:,7,:].shape, postpad.shape)
-        # don't have b8 term
-        Pi = np.array([Ploop[:, 3, :] + b1 * Ploop[:, 7, :],
-                       (Ploop[:, 15, :] + b1 * Ploop[:, 12, :]) / knl**2,
-                       (Ploop[:, 16, :] + b1 * Ploop[:, 13, :]) / km**2,
-                       (Ploop[:, 17, :] + b1 * Ploop[:, 14, :]) / km**2])
-        # (kl0**2 + kl2**2) / nd / km**2,
-        # kl2**2 / nd / km**2])
+    if withhex: Pi = Pi[:,:, kmask]
+    else:       Pi = Pi[:,:2, kmask]
+    Pi = Pi.reshape( (Pi.shape[0], -1) )
 
-    return Pi[:, :2, kmask]
+    if bisp is not None: # if with bisp, we can marginalized over the bisp shot noise P11 * P11 and b8^2/nd^2
+        nparams = Pi.shape[0]
+        nkpred = Pi.shape[1]
+        nkbisp = sum(masktriangle)
+        #newPi = np.zeros( shape=(nparams+1, nkpred+nkbisp) ) 
+        newPi = np.zeros( shape=(nparams, nkpred+nkbisp) )
+        newPi[:nparams, :nkpred] = Pi
+        #newPi[-1, nkpred:] = bisp[4][masktriangle] * 0.00952 * shotnoiseprior * 10.
+        #newPi[-1, nkpred:] = np.ones(nkbisp) * shotnoiseprior**2 * 4. * 100.
+        Pi = 1.*newPi
+    
+    return Pi
 
 
 def get_Covbi_for_marg(Pi_data, Cinv, sigma=200):
@@ -273,8 +250,6 @@ def check_if_multipoles_k_array(setk):
 def computePS(cvals, plin, ploop, setkin, kmin, kmax, sigsq=0, Puncorr=0):
     plin0, plin2 = plin
     ploop0, ploop2 = ploop[:, :18, :]
-    # ploop0e1b1, ploop2e1b1 = ploop[:, 19, :]
-    # ploop0e1, ploop2e1 = ploop[:, 22, :]
     b1, c2, b3, c4, b5, b6, b7, b8, b9, b10, b11, e1, e2, e3 = cvals
 
     b2 = (c2 + c4) / np.sqrt(2.)
@@ -357,8 +332,8 @@ def lnlike(theta, chi2data, Cinvdata, Cinv, kmin, kmax, free_para, fix_para, bou
                        omega_c - Grid.valueref[2], omega_b - Grid.valueref[3],
                        ns - Grid.valueref[4], Summnu - Grid.valueref[5]))
 
-    Plin = computederivs.get_PSTaylor(dtheta, linder)
-    Ploop = computederivs.get_PSTaylor(dtheta, loopder)
+    Plin = tbird.get_PSTaylor(dtheta, linder)
+    Ploop = tbird.get_PSTaylor(dtheta, loopder)
 
     kfull = Plin[0, :, 0]
     if check_if_multipoles_k_array(kfull):
