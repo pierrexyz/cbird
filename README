@@ -1,8 +1,6 @@
 --- CBiRd ---
-Code for Bias tracers in Redshift space
+Code for Biased tracers in Redshift space
 version 0.5 (earlyCBiRd - 12/09/2019)
-
-by: Guido D'Amico, Leonardo Senatore, Pierre Zhang
 
 
 Introduction
@@ -34,7 +32,7 @@ corrections described in arXiv:1609.01714.
 - MCBiRd: MCMC samplers for a power spectrum and bispectrum analysis of 
 galaxy-redshift surveys data based on emcee: arXiv:1202.3665
 
-More details can be found in arXiv:1909.XXXXX and arXiv:1909.XXXXX
+More details can be found in arXiv:1909.05271 and arXiv:1909.XXXXX
 
 
 C++ Requirements
@@ -205,8 +203,10 @@ arXiv:1909.XXXXX
 
 Contributors
 ------------
-Parts of the code has been written with the help of:
-F. Beutler, T. Colas, H. Gil-Marin, J. Gleyzes, N. Kokron, 
-M. Lewandowski, D. Markovic and A. Perko.
+Developped by: Guido d'Amico (TBiRd), Jerome Gleyzes (MCBiRd) and 
+Pierre Zhang (C++BiRd)
+Supervised by: Leonardo Senatore (TBiRd, C++BiRd)
 
-Special mention to J. Gleyzes for early contributions on the pipeline.
+Parts of the code has been written with the help of:
+F. Beutler, T. Colas, H. Gil-Marin, N. Kokron, M. Lewandowski, 
+D. Markovic and A. Perko.
