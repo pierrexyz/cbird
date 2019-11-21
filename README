@@ -71,7 +71,7 @@ Makefile, and run 'make'.
 To run CBiRd type:
 ./cbird path/to/inifile
 
-An example inifile can be found in c++bird.ini
+An example inifile can be found in cnest/cbird.ini
 
 
 C++BiRd Output
