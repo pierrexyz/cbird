@@ -1,21 +1,19 @@
-CXX = icc
+CXX = g++
 CXXFlags = -Wall -Wextra -pedantic -g -O2 -DNDEBUG
 
-EXEC = cbird
+EXEC =	cbird
 SRC = $(wildcard *.cpp)
 OBJ = $(SRC: .cpp=.o) 
-STD = -std=c++0x
-LIBPATH = -I/exports/pierre/libraries/include -L/exports/pierre/libraries/lib
+STD = -std=c++11
 GSL = -lm -lgsl -lgslcblas
-CUBA = -lcuba -lm
 FFTW = -lfftw3
 
 
 all: $(EXEC)
 
 $(EXEC): $(OBJ)
-	$(CXX) $^ -o $@ $(STD) $(GSL) $(CUBA) $(FFTW) $(LIBPATH)
-
+	$(CXX) $^ -o $@ $(STD) $(GSL) $(FFTW)
+	
 %.o: %.cpp
 	$(CXX) $(CXXFlags) -o $@ -c $^ 
 

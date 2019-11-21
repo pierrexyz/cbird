@@ -284,7 +284,6 @@ if __name__ == "__main__":
 
     # Load window
     if 'GC' in ZONE:
-        kfull = arrayPlin[0,:,0]
         kpredwin, Qllwin = load_window(simname, ZONE, kpred, withmask=True, windowk=0.05)
     
     lenrun = int(len(thetatab) / runs)

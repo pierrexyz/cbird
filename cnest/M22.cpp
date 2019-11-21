@@ -1,31 +1,5 @@
 #include "CBiRd.h"
 
-/* Computes the Gamma function using the Lanczos approximation */
-static dcomplex MyGamma(dcomplex z) {
-    /* Lanczos coefficients for g = 7 */
-    static double p[] = {
-        0.99999999999980993227684700473478,
-        676.520368121885098567009190444019,
-       -1259.13921672240287047156078755283,
-        771.3234287776530788486528258894,
-       -176.61502916214059906584551354,
-        12.507343278686904814458936853,
-       -0.13857109526572011689554707,
-        9.984369578019570859563e-6,
-        1.50563273514931155834e-7
-    };
-
-    if(z.real() < 0.5)
-        return M_PI / (sin(M_PI*z)*MyGamma(1. - z));
-
-    z -= 1;
-    dcomplex x = p[0];
-    for(int n = 1; n < 9; n++)
-        x += p[n] / (z + double(n));
-    dcomplex t = z + 7.5;
-    return sqrt(2*M_PI) * pow(t, z+0.5) * exp(-t) * x;
-}
-
 dcomplex I(const dcomplex & n1, const dcomplex & n2) {
 	return MyGamma(1.5-n1)* MyGamma(1.5-n2) * MyGamma(-1.5+n1+n2) / ( 8.*pow(M_PI,1.5) * MyGamma(n1) * MyGamma(3.-n1-n2) * MyGamma(n2) ) ;
 }

@@ -1,6 +1,6 @@
 --- CBiRd ---
 Code for Biased tracers in Redshift space
-version 0.5 (earlyCBiRd - 12/09/2019)
+version 0.6 (earlyCBiRd - 21/11/2019)
 
 Contact: Pierre Zhang (pierrexyz@gmail.com)
 
@@ -15,13 +15,11 @@ cosmos with LSS surveys.
 
 CBiRd computes the following correlators of biased tracers in redshift
 space:
-- the multipoles l = 0, 2, 4 of the one-loop power 
+- the multipoles l = 0, 2 of the one-loop power 
 spectrum described in arXiv:1610.09321 using an FFTLog decomposition of 
 the linear power spectrum and analytic evaluation of the loop 
 integrals following arXiv:1708.08130. The multipoles are IR-resummed 
 using controlled approximations identified in arXiv:1512.06831.
-- the monopole of the tree-level bispectrum for 
-arbitrary Alcock-Paczynski parameters.
 
 CBiRd consists in:
 - C++BiRd: a C++ code for core calculation
@@ -34,7 +32,7 @@ corrections described in arXiv:1609.01714.
 - MCBiRd: MCMC samplers for a power spectrum and bispectrum analysis of 
 galaxy-redshift surveys data based on emcee: arXiv:1202.3665
 
-More details can be found in arXiv:1909.05271 and arXiv:1909.XXXXX
+More details can be found in arXiv:1909.05271 and arXiv:1909.07951
 
 
 C++ Requirements
@@ -90,8 +88,6 @@ in the other column are evaluated and 'bi' are the EFT coefficients
 multiplying the power spectra Pi(k) in the corresponding column. 
 The total power spectrum is then given by:
 P(k, z) = bi * Pi(k, z) (sum over i) where z is the redshift.
-
-CBiRd generates the bispectrum in one file: 'BispectrumTreeMonopole.dat'
 
 
 C++BiRd Performances
@@ -171,7 +167,7 @@ Check an alternative implementation in the likelihood function
 lnlike(...) calling computePS(...) in MCMC_taylor.py ) 
 
 TBiRd numerical convergence for a low-order Taylor expansion is 
-described in arXiv:1909.XXXXX.
+described in arXiv:1909.07951.
 
 
 MCBiRd running
@@ -200,7 +196,7 @@ F. Beutler, H. Gil-Marin, arXiv:1909.05271
 'Efficient Cosmological Analysis of the SDSS/BOSS data from the 
 Effective Field Theory of Large-Scale Structure',
 T. Colas, G. d'Amico, L. Senatore, P. Zhang, F. Beutler, 
-arXiv:1909.XXXXX
+arXiv:1909.07951
 
 
 Contributors

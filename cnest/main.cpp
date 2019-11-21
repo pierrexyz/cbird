@@ -1,5 +1,12 @@
 #include "CBiRd.h"
-#include "ResumEFT.h"
+
+// #include <ctime>
+// #include <ratio>
+// #include <chrono>
+// using namespace std::chrono;
+
+static Correlator Cf ;
+static Correlator Ps ;
 
 int main(int argc, char *argv[]) {
 
@@ -13,15 +20,15 @@ int main(int argc, char *argv[]) {
 		double nbar = 3e-4 , knl = 1., km = 1. ;
 		redshift z0 = 0.61 ;
 		ParametersCosmology cosmo ; for (unsigned int i = 0 ; i < Nc ; i++) cosmo[i] = Reference[i] ;
-		YesNo ComputePowerSpectrum = 1, ResumPowerSpectrum = 1, ComputeBispectrum = 0 ;
-		YesNo ExportM = 0, ImportM = 0 ;
-		string PathToOutput = "./", PathToLinearPowerSpectrum, PathToTriangles ;
+		YesNo ExportPowerSpectraNoResum = 1, ExportCorrFuncNoResum = 1, ResumPowerSpectrum = 1 ;
+		string PathToOutput = "./", PathToLinearPowerSpectrum ;
 		double aperp = 1., apar = 1. ;
+		unsigned int Nlout = 2 ;
 
 		LoadConfigFile (argv[1], nbar, km, knl, z0, cosmo, 
 			PathToOutput, PathToLinearPowerSpectrum, 
-			ComputePowerSpectrum, ResumPowerSpectrum, ComputeBispectrum,
-			PathToTriangles, aperp, apar) ;
+			ExportPowerSpectraNoResum, ExportCorrFuncNoResum, ResumPowerSpectrum, 
+			aperp, apar, Nlout) ;
 
 		knl = km ;
 		///////////////////////////
@@ -30,47 +37,30 @@ int main(int argc, char *argv[]) {
 
 		ParamsP11 paramsP11 ;
 		LoadP11 (PathToLinearPowerSpectrum, cosmo, z0, paramsP11) ;
+		//LoadEinseinsteinHu(cosmo, z0, paramsP11) ;
+		//LoadEinseinsteinHuWithMassiveNu(cosmo, z0, paramsP11) ;
 
-		if (ComputePowerSpectrum == true) {
+		double s[Nx] ;
+		size_t Nq = Nopti ;
+		for (unsigned int i = 0 ; i < Nopti ; i++) s[i] = qopti[i] ;
 
-			PowerSpectraNoResum Ps1Loop ;
-			PowerSpectraNoResum PsLinear ;
+		double k[Nx] ;
+		size_t Nk = Nout ;
+		for (unsigned int i = 0 ; i < Nk ; i++) k[i] = kout[i] ;
 
-			ComputePowerSpectraLinearNoResum  (paramsP11, &PsLinear) ;
-			ComputePowerSpectra1LoopNoResum (paramsP11, nbar, km, knl, &Ps1Loop) ;
-			
-			if (ResumPowerSpectrum == true) {
+		// auto start = high_resolution_clock::now() ;
 
-				ParamsP11 paramsP11Smooth ;
-				LoadEinseinsteinHu(cosmo, z0, paramsP11Smooth) ;
+		ComputeCorrelator(paramsP11, Nq, &s, &Cf, Nk, &k, &Ps, Nlout) ;
+		
+		if (ExportPowerSpectraNoResum == true) ExportCorrelator(PathToOutput, "PowerSpectraNoResum", Nk, &k, &Ps, true, Nlout) ;
 
-				PowerSpectraNoResum Ps1LoopSmooth ;
-				PowerSpectraNoResum PsLinearSmooth ;
+		ResumCorrelator (paramsP11, Nq, &s, &Cf, &Ps, Nlout) ;
 
-				ComputePowerSpectraLinearNoResum  (paramsP11Smooth, &PsLinearSmooth) ;
-				ComputePowerSpectra1LoopNoResum (paramsP11Smooth, nbar, km, knl, &Ps1LoopSmooth) ;
+		// start = high_resolution_clock::now();
+		// duration = duration_cast<milliseconds>(stop-start);
+		// cout << "CBiRd ran in " << duration.count() << " milliseconds." << endl ;
 
-				static StoreM TableM ;
-
-				if (ImportM == false) ResumM (PathToOutput, paramsP11, ExportM, &TableM) ;
-
-				//ExportPowerSpectraNoResum (PathToOutput, 0, &PsLinear) ;
-				//ExportPowerSpectraNoResum (PathToOutput, 1, &Ps1Loop) ;
-				
-				ResumSmoothOscPowerSpectra (PathToOutput, paramsP11, &PsLinear, &Ps1Loop, &PsLinearSmooth, &Ps1LoopSmooth, &TableM) ;
-				//ResumPowerSpectra (PathToOutput, paramsP11, &PsLinear, &Ps1Loop, ImportM, ExportM, &TableM) ;
-			}
-
-			else {
-				ExportPowerSpectraNoResum (PathToOutput, 0, &PsLinear) ;
-				ExportPowerSpectraNoResum (PathToOutput, 1, &Ps1Loop) ;
-
-			}
-		}
-
-		if (ComputeBispectrum == true) {
-			ComputeBispectrumMonopole (PathToOutput, PathToTriangles, paramsP11, nbar, aperp, apar) ;
-		}
+		ExportCorrelator(PathToOutput, "PowerSpectra", Nk, &k, &Ps, true, Nlout) ;
 	}
 
 	return 0 ;
