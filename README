@@ -42,7 +42,6 @@ CBiRd is written in C++ with standard ISO C++11.
 Three libraries are required for compilation:
 - the GSL library <https://www.gnu.org/software/gsl/>
 - the FFTW library <http://www.fftw.org/>
-- the CUBA library (version 4.2) <http://www.feynarts.de/cuba/> 
 - the Eigen library <http://eigen.tuxfamily.org/> 
 The code is provided with the Eigen headers in the source: no 
 installation should be required for the Eigen library.
@@ -50,18 +49,6 @@ installation should be required for the Eigen library.
 The loop calculation involves a discrete Fourier transformation routine 
 from the FFTW library and the use of the Eigen library for efficient 
 matrix multiplication.
-
-The IR-resummation makes use of the FFTLog algorithm first written in 
-Fortran by A. Hamilton: <http://casa.colorado.edu/~ajsh/FFTLog/>, then 
-translated in C by J. Carlson within the Copter library: 
-<http://mwhite.berkeley.edu/Copter/>, which is released under the GNU 
-General Public License, see 
-<https://www.gnu.org/licenses/gpl-3.0.en.html>. 
-The files 'fftlog.h' and 'fftlog.cpp' are from the Copter library. 
-
-The bispectrum monopole projection is performed with the Cuhre routine 
-of the CUBA library.
-
 
 C++BiRd compiling and running
 -----------------------------
@@ -77,8 +64,8 @@ An example inifile can be found in cnest/cbird.ini
 C++BiRd Output
 --------------
 CBiRd generates the power spectrum multipoles stacked horizontally in 
-two files:
-'PowerSpectraLinear.dat' and 'PowerSpectra1loop.dat'
+one file:
+'PowerSpectra.dat'
 
 First line in the output files (with an '#' at the beginning) is the 
 legend for the columns:
@@ -88,6 +75,8 @@ in the other column are evaluated and 'bi' are the EFT coefficients
 multiplying the power spectra Pi(k) in the corresponding column. 
 The total power spectrum is then given by:
 P(k, z) = bi * Pi(k, z) (sum over i) where z is the redshift.
+The next three columns after the first column is the linear part.
+The following columns correspond to the 1-loop.
 
 
 C++BiRd Performances
@@ -96,24 +85,8 @@ Convergence:
 C++BiRd has been tested against Mathematica codes (some can be found in 
 the EFTofLSS repository <http://web.stanford.edu/~senatore/>) and 
 against an earlier version involving numerical evaluation of the loop 
-integrals. The spectra are computed up to sub-percent numerical 
-precision. See cnest/TEST for results on numerical consistency and 
-stability tests.
-
-Efficiency:
-C++BiRd is not so fast because of the computation of long-wavelength 
-modulation matrices for IR-resummation. In comparison evaluation of the 
-loop integrals is pretty rapid. 
-
-Possible (straightforward) improvements:
-- In current version the analytic results of the loop integrals are not 
-stored. 
-- Shot noise subtraction produces a factor 2 on the evaluation of the 
-loop integrals.
-- Stochastic terms and terms multiplied by b4 can be not necessarily 
-computed from C++BiRd, as the cosmological dependence of the first ones 
-are solely entering in their respective EFT coefficients, while for the 
-second one b2 and b4 are 99% correlated, see arXiv:1909.05271.
+integrals. The monopole is computed up to permil precision and the 
+quadrupole up to half percent.
 
 
 Python dependencies
