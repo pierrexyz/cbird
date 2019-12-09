@@ -530,7 +530,7 @@ if __name__ == "__main__":
     priorgauss = 4.
     bfmintab = np.concatenate(([lnAsmin, Ommin, hmin], [0., -4., -priorsup, -priorsup] + 8*[-priorsup])) # We require b_1 > 0
     bfmaxtab = np.concatenate(([lnAsmax, Ommax, hmax], [4., 4., priorsup, priorsup] + 8*[priorsup]))
-    bounds = zip(bfmintab, bfmaxtab)
+    bounds = np.array(list(zip(bfmintab, bfmaxtab)))
 
     onesigma = np.array([ 0.3, 0.04, 0.03, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 1., 0.5]) # Guess for the \sigma, to help with the initial position of walkers
     tryini = np.array([3.12,  0.307,  0.669, 1.97,  1.56, -4.07, 5.02, 1.33, -6.39, -0.64, -0.21, 0, 0, 0, 0]) # initial guess
@@ -592,7 +592,7 @@ if __name__ == "__main__":
     t0 = time.time()
     Nchains  =  4
     nwalkers  =  16*ndim
-    nthreads = cpu_count()/Nchains
+    nthreads = int(cpu_count() / Nchains)
 
     # Set up the sampler.
     pos = []
@@ -609,7 +609,7 @@ if __name__ == "__main__":
     t_try = time.time()
     for jj in range(0, Nchains):
         initialpos = []
-        for ii in xrange(nwalkers):
+        for ii in range(nwalkers):
             accepted  =  False
             t_try = time.time()
             while (not accepted):
@@ -646,11 +646,11 @@ if __name__ == "__main__":
                 chainchi2  =  -2.*result[1]
                 rstate  =  result[2]
             # we do the convergence test on the second half of the current chain (itercounter/2)
-            chainsamples  =  sampler[jj].chain[:, itercounter/2:, :].reshape((-1, ndim))
+            chainsamples  =  sampler[jj].chain[:, int(itercounter/2):, :].reshape((-1, ndim))
             withinchainvar[jj]  =  np.var(chainsamples, axis = 0)
             meanchain[jj]  =  np.mean(chainsamples, axis = 0)
             samplesJG.append(chainsamples)
-        scalereduction  =  gelman_rubin_convergence(withinchainvar, meanchain, itercounter/2, Nchains, ndim)
+        scalereduction  =  gelman_rubin_convergence(withinchainvar, meanchain, int(itercounter/2), Nchains, ndim)
         print("scalereduction  =  ", scalereduction)
         loopcriteria  =  0
         for jj in range(0, ndim):

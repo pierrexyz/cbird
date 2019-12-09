@@ -6,11 +6,13 @@ import copy
 from scipy.optimize import fsolve
 import configobj as cfg
 
-configfile = "config_CMASS.ini"
+configfile = "config_paper.ini"
 gridname = "z0p55-A_s-h-omega_cdm-omega_b-n_s-Sum_mnu"
 freepar = ["A_s", "h", "omega_cdm", "omega_b", "n_s", "Sum_mnu"]
-dx = np.array([0.1, 0.02, 0.04, 0.04, 0.02, 0.25])  # Relative error. DO NOT CHANGE FOR A FIXED GRID!
-order = 3  # For the moment I keep this same for everything.
+# dx = np.array([0.1, 0.02, 0.04, 0.04, 0.02, 0.25])  # Relative error. DO NOT CHANGE FOR A FIXED GRID!
+dx = np.array([0.15, 0.02, 0.04, 0.04, 0.02, 0.25])  # Relative error. DO NOT CHANGE FOR A FIXED GRID!
+order = 2  # For the moment I keep this same for everything.
+center = order + 1 # Here we use a smaller grid, then padded with zeros
 
 parref = cfg.ConfigObj(configfile)
 redshift = float(parref["z_pk"])
@@ -47,7 +49,7 @@ def get_masses(sum_masses, hierarchy='NH'):
 
 
 # First step: compute PS. Tested, good
-def CompPterms(pardict, kmin=0.01, kmax=0.31):
+def CompPterms(pardict, kmin=0.001, kmax=0.31):
     """Given a parameter dictionary, a kmin (can be None) and a kmax (can be None),
     returns Plin, Ploop concatenated for multipoles, shape (lenk * 3, columns).
     The zeroth column are the k"""

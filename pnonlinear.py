@@ -6,7 +6,7 @@ import subprocess
 keys_cbird = ["PathToOutput", "PathToLinearPowerSpectrum",
               "knl", "km", "nbar",
               "ComputePowerSpectrum", "ResumPowerSpectrum", "ComputeBispectrum",
-              "z_pk", "ln10^{10}A_s", "n_s", "h", "omega_b", "omega_cdm",
+              "z_pk", "ln10^{10}A_s", "n_s", "h", "omega_b", "omega_cdm","N_ncdm","Sum_mnu",
               "PathToTriangles", "aperp", "apar"]
 
 
@@ -70,6 +70,7 @@ class NonLinearPower(object):
         """
         parfile = self.create_parfile()
         self._command = [self.cbird_exe, parfile]
+        print(self._command)
         process = subprocess.Popen(self._command)
         try:
             # process.wait(timeout=300)
@@ -84,7 +85,7 @@ class NonLinearPower(object):
         """
         Gets the linear resummed power spectrum
         """
-        Plin_file = os.path.join(self.outdir, "PowerSpectraLinear.dat")
+        Plin_file = os.path.join(self.outdir, "PowerSpectra.dat")
         try:
             Plin = np.loadtxt(Plin_file)
         except IOError:
@@ -93,14 +94,14 @@ class NonLinearPower(object):
         if (self.kmin is not None) and (self.kmax is not None):
             kin = Plin[:, 0]
             kmask = np.where((kin>=self.kmin)&(kin<=self.kmax))[0]
-            Plin = Plin[kmask]
+            Plin = Plin[kmask, :4]
         return Plin
 
     def get_Ploop_resum(self):
         """
         Gets the loop resummed power spectrum
         """
-        Ploop_file = os.path.join(self.outdir, "PowerSpectra1loop.dat")
+        Ploop_file = os.path.join(self.outdir, "PowerSpectra.dat")
         try:
             Ploop = np.loadtxt(Ploop_file)
         except IOError:
@@ -110,4 +111,4 @@ class NonLinearPower(object):
             kin = Ploop[:, 0]
             kmask = np.where((kin>=self.kmin)&(kin<=self.kmax))[0]
             Ploop = Ploop[kmask]
-        return Ploop[:, :19]
+        return np.concatenate([Ploop[:, :1], Ploop[:, 4:]], axis=1)
