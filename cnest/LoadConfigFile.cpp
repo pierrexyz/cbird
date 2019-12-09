@@ -42,7 +42,7 @@ void LoadConfigFile (char * ConfigFile, double & nbar, double & km, double & knl
 
 		else if (strcmp(token, "z_pk") == 0) while ((token = strtok(NULL, delim)) != NULL) z0 = atof(token) ;
 		else if (strcmp(token, "ln10^{10}A_s") == 0) while ((token = strtok(NULL, delim)) != NULL) cosmo[0] = atof(token) ;
-		else if (strcmp(token, "A_s") == 0) while ((token = strtok(NULL, delim)) != NULL) cosmo[0] = log( atof(token) *1e10 ) ;
+		//else if (strcmp(token, "A_s") == 0) while ((token = strtok(NULL, delim)) != NULL) cosmo[0] = log( atof(token) *1e10 ) ;
 		else if (strcmp(token, "n_s") == 0) while ((token = strtok(NULL, delim)) != NULL) cosmo[1] = atof(token) ;
 		else if (strcmp(token, "h") == 0) while ((token = strtok(NULL, delim)) != NULL) cosmo[2] = atof(token) ;
 		else if (strcmp(token, "omega_b") == 0) while ((token = strtok(NULL, delim)) != NULL) { cosmo[3] = atof(token) ; }

@@ -9,7 +9,7 @@ dcomplex MPC (const unsigned int & l, const dcomplex & n1) {
 	return pow(2., -2.*n1) * pow(M_PI, -1.5) * MyGamma(1.5 + l/2. - n1) / MyGamma(l/2. + n1) ;
 }
 
-void ComputeCorrelator (const ParamsP11 & p, const size_t & Nq, Coordinates * s, Correlator * Cf , const size_t & Nk, Coordinates * k , Correlator * Ps, const unsigned int & Nlmax) {
+void ComputeCorrelator (const ParamsP11 & p, const ParamsP11 & psmooth, const size_t & Nq, Coordinates * s, Correlator * Cf , Correlator * Cfsmooth , const size_t & Nk, Coordinates * k , Correlator * Ps, const unsigned int & Nlmax) {
 	
 	// FFTLog decomposition
 	dcomplex Coef[NFFT+1], Pow[NFFT+1] ;
@@ -237,6 +237,98 @@ void ComputeCorrelator (const ParamsP11 & p, const size_t & Nq, Coordinates * s,
 			(*Cf)[i][12][m] = (*Multipole22[7])[i]*C22[7][m] ;																																			// *b2*b2
 			(*Cf)[i][13][m] = (*Multipole22[8])[i]*C22[8][m] ;																																			// b2*b4
 			(*Cf)[i][14][m] = (*Multipole22[9])[i]*C22[9][m] ;																																			// b4*b4
+		}
+	}
+
+	/***** Smooth correlation function ******/
+
+	// FFTLog decomposition
+	dcomplex Coefsmooth[NFFT+1], Powsmooth[NFFT+1] ;
+	CoefPow(Coefsmooth, Powsmooth, psmooth) ;
+
+	Eigen::Map<Eigen::ArrayXcd> ArrPowsmooth(Powsmooth, NFFT+1) ;
+	Eigen::Map<Eigen::ArrayXcd> ArrCoefsmooth(Coefsmooth, NFFT+1) ;
+
+	// Terms c_m q^p_m in the sum of Cf11
+	Eigen::ArrayXcd ArrTermsCfsmooth[Nq] ;
+	for (unsigned int m = 0 ; m < Nq ; m++) {
+		ArrTermsCfsmooth[m] = -ArrPowsmooth-3. ;
+		ArrTermsCfsmooth[m] *= log((*s)[m]) ;
+		ArrTermsCfsmooth[m] = ArrTermsCfsmooth[m].exp() ;
+		ArrTermsCfsmooth[m] *= ArrCoefsmooth ;
+	}
+
+	/* Cf-linear */
+	for (unsigned int i = 0 ; i < Nlmax ; i++) { // multipole
+		
+		Eigen::RowVectorXcd MPC11(NFFT+1) ;
+		for (unsigned int m1 = 0 ; m1 < NFFT+1 ; m1++) 
+			MPC11(m1) = MPC(2*i, -0.5*Powsmooth[m1]) ;
+		
+		for (unsigned int m = 0 ; m < Nq ; m++) {
+			dcomplex Cf11tmp = MPC11*ArrTermsCfsmooth[m].matrix() ;
+			(*Cfsmooth)[i][0][m] = m4[i] *p.f*p.f * Cf11tmp.real() ;
+			(*Cfsmooth)[i][1][m] = m2[i] *2.*p.f * Cf11tmp.real() ;
+			(*Cfsmooth)[i][2][m] = m0[i] * Cf11tmp.real() ;
+		}
+	}
+
+	/* Cf-counterterm */
+	for (unsigned int i = 0 ; i < Nlmax ; i++) {
+		
+		Eigen::RowVectorXcd MPCCT(NFFT+1) ;
+		for (unsigned int m1 = 0 ; m1 < NFFT+1 ; m1++) 
+			MPCCT(m1) = MPC(2*i, -0.5*Pow[m1]-1.) ;
+		
+		for (unsigned int m = 0 ; m < Nq ; m++) {
+			Eigen::ArrayXcd ArrTermCT ;
+			ArrTermCT = -ArrPowsmooth-5. ;
+			ArrTermCT *= log((*s)[m]) ;
+			ArrTermCT = ArrTermCT.exp() ;
+			ArrTermCT *= ArrCoefsmooth ;
+			dcomplex CfCTtmp = MPCCT*ArrTermCT.matrix() ;
+			(*Cfsmooth)[i][15][m] = m0[i] * 2. *CfCTtmp.real() ;			// b1*b5
+			(*Cfsmooth)[i][16][m] = m2[i] * 2. *CfCTtmp.real() ;			// b1*b6
+			(*Cfsmooth)[i][17][m] = m4[i] * 2. *CfCTtmp.real() ; 			// b1*b7
+			(*Cfsmooth)[i][18][m] = m2[i] * 2. *p.f *CfCTtmp.real() ;		// b5
+			(*Cfsmooth)[i][19][m] = m4[i] * 2. *p.f *CfCTtmp.real() ;		// b6
+			(*Cfsmooth)[i][20][m] = m6[i] * 2. *p.f *CfCTtmp.real() ;		// b7
+		}
+	}
+
+	for (unsigned int i = 0 ; i < Nlmax ; i++) {
+		// Cf22
+		double C22smooth[N22][Nq] ;
+		for (unsigned int j = 0 ; j < N22 ; j++) {
+			Eigen::Map<Eigen::MatrixXcd> M22tmp(Mat22[i][j], NFFT+1, NFFT+1) ; // Eigen by default saves matrices in column-major format ; thus we used m1+(NFFT+1)*m2 indexing above
+			for (unsigned int m = 0 ; m < Nq ; m++) {
+				dcomplex dc22tmp = ArrTermsCfsmooth[m].matrix().transpose() * M22tmp * ArrTermsCfsmooth[m].matrix() ;
+				C22smooth[j][m] = dc22tmp.real() ;
+			}
+		}
+		// Cf13
+		double C13smooth[N13][Nq] ;
+		for (unsigned int j = 0 ; j < N13 ; j++) {
+			Eigen::Map<Eigen::MatrixXcd> M13tmp(Mat13[i][j], NFFT+1, NFFT+1) ;
+			for (unsigned int m = 0 ; m < Nq ; m++) {
+				dcomplex dc13tmp = ArrTermsCfsmooth[m].matrix().transpose() * M13tmp * ArrTermsCfsmooth[m].matrix() ;
+				C13smooth[j][m] = dc13tmp.real() ;
+			}
+		}
+		// Cf_l
+		for (unsigned int m = 0 ; m < Nq ; m++) {
+			(*Cfsmooth)[i][3][m] = (*Multipole22[17])[i]*C22smooth[17][m] + (*Multipole22[18])[i]*C22smooth[18][m] + (*Multipole22[19])[i]*C22smooth[19][m] + (*Multipole13[6])[i]*C13smooth[6][m] + (*Multipole13[7])[i]*C13smooth[7][m] ;	// *1
+			(*Cfsmooth)[i][4][m] = (*Multipole22[10])[i]*C22smooth[10][m] + (*Multipole22[11])[i]*C22smooth[11][m] + (*Multipole22[12])[i]*C22smooth[12][m] + (*Multipole13[3])[i]*C13smooth[3][m] + (*Multipole13[4])[i]*C13smooth[4][m];	// *b1
+			(*Cfsmooth)[i][5][m] = (*Multipole22[13])[i]*C22smooth[13][m] + (*Multipole22[14])[i]*C22smooth[14][m] ;																										// *b2
+			(*Cfsmooth)[i][6][m] = (*Multipole13[5])[i]*C13smooth[5][m] ;																																			// *b3
+			(*Cfsmooth)[i][7][m] = (*Multipole22[15])[i]*C22smooth[15][m] + (*Multipole22[16])[i]*C22smooth[16][m] ;																										// *b4
+			(*Cfsmooth)[i][8][m] = (*Multipole22[0])[i]*C22smooth[0][m] + (*Multipole22[3])[i]*C22smooth[3][m] + (*Multipole22[4])[i]*C22smooth[4][m] + (*Multipole13[0])[i]*C13smooth[0][m] + (*Multipole13[1])[i]*C13smooth[1][m] ;		// *b1*b1
+			(*Cfsmooth)[i][9][m] = (*Multipole22[1])[i]*C22smooth[1][m] + (*Multipole22[5])[i]*C22smooth[5][m] ;																											// *b1*b2
+			(*Cfsmooth)[i][10][m] = (*Multipole13[2])[i]*C13smooth[2][m] ;																																			// *b1*b3
+			(*Cfsmooth)[i][11][m] = (*Multipole22[2])[i]*C22smooth[2][m] + (*Multipole22[6])[i]*C22smooth[6][m] ;																											// *b1*b4
+			(*Cfsmooth)[i][12][m] = (*Multipole22[7])[i]*C22smooth[7][m] ;																																			// *b2*b2
+			(*Cfsmooth)[i][13][m] = (*Multipole22[8])[i]*C22smooth[8][m] ;																																			// b2*b4
+			(*Cfsmooth)[i][14][m] = (*Multipole22[9])[i]*C22smooth[9][m] ;																																			// b4*b4
 		}
 	}
 }

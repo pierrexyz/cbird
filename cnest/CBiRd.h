@@ -20,8 +20,11 @@ using namespace std ;
 typedef complex<double> dcomplex ;
 
 // min max IR-convolution
-const double qMIN = 60. ;
-const double qMAX = 170. ;
+const double qMIN = 1. ;
+const double qMAX = 1000. ;
+const double qCUTL = 55. ;
+const double qCUTR = 165. ;
+const unsigned NPAD = 6 ;
 
 // Stuffs for FFTLog decomposition of the linear power spectrum
 const size_t NFFT = 256 ;
@@ -66,6 +69,12 @@ static dcomplex MyGamma(dcomplex z) {
 struct InterpFunc {
 	gsl_interp_accel * accel ;
 	gsl_spline * interp ;
+} ;
+
+// Struct declarations
+struct InterpLFunc {
+    gsl_interp_accel * accel ;
+    gsl_interp * interp ;
 } ;
 
 struct ParamsP11 {
@@ -146,7 +155,8 @@ const size_t Np = 21 ;
 const size_t Nx = 100 ; // max number of k or q 
 typedef double Coordinates[Nx] ;
 typedef double Correlator[Nl][N0+N1][Nx] ;
-void ComputeCorrelator (const ParamsP11 & p, const size_t & Nq, Coordinates * q, Correlator * Cf , const size_t & Nk, Coordinates * k , Correlator * Ps, const unsigned int & Nlout = Nl) ;
+void ComputeCorrelator (const ParamsP11 & p, const ParamsP11 & psmooth, const size_t & Nq, Coordinates * s, Correlator * Cf , Correlator * Cfsmooth , const size_t & Nk, Coordinates * k , Correlator * Ps, const unsigned int & Nlmax = Nl) ;
+    
 dcomplex MPC (const unsigned int & l, const dcomplex & n1) ;
 
 // ExportCorrelator.cpp
@@ -154,8 +164,8 @@ void ExportCorrelator (const string & Path, const char *, const size_t & Nmax, C
 
 // ResumQ.cpp
 const double qInfinity = 10000. ;
-const double alpha = 1./3. ;
-const double beta = 1./3. ;
+const double alpha = 0. ; //1./3. ;
+const double beta = 0. ; //1./3. ;
 double ResumQ0 (const int & l, const int & lp, const double & k, const double & q, const InterpFunc & InterpX1, const InterpFunc & InterpY1, const double & f1) ;
 double ResumQ1(const int & l, const int & lp, const double & k, const double & q, const InterpFunc & InterpX1, const InterpFunc & InterpY1, const double & f1) ;
 
@@ -169,14 +179,8 @@ double Y1 (const double & q, const InterpFunc & InterpX1) ;
 // ResumCorrelator.cpp
 double C (const double & q, const InterpFunc & InterpC) ;
 double Q (const int & order, const int & l, const int & lp, const double & k, const double & q, const InterpFunc & InterpX1, const InterpFunc & InterpY1, const double & ff) ;
-void ResumCorrelator (const ParamsP11 & InterpP11, const size_t & Nq, Coordinates * q, Correlator * Cf, Correlator * Ps, const size_t & Nlout = Nl) ;
+void ResumCorrelator (const ParamsP11 & InterpP11, const size_t & Nq, Coordinates * q, Correlator * Cf, Correlator * Cfsmooth, Correlator * Ps, const size_t & Nlout = Nl) ;
 double Resum_Integrand_GSL (double q, void * params) ;
 void UnloadInterp (InterpFunc & params) ;
-
-static void ResizeArray(const size_t Na, double Array[], double SubArray[]) {
-    for (unsigned int i = 0 ; i < Na ; i++) SubArray[i] = Array[i] ;
-}
-
-void ExtractBAO(const size_t & Nq, Coordinates * q, double Cf[], double BAO[]) ;
 
 #endif
